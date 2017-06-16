@@ -33,11 +33,11 @@ public class VideoPlayerRender extends FrameLayout
     private final String TAG = this.getClass().getSimpleName();
 
     private int mPlayerType = PlayerConstants.PLAYER_TYPE_IJK;
-    private int mCurrentPlayState = PlayerConstants.STATE_IDLE;
-    private int mTargetPlayState = PlayerConstants.STATE_IDLE;
+    private PlayerState mCurrentPlayState = PlayerState.IDLE;
+    private PlayerState mTargetPlayState = PlayerState.IDLE;
     private int mTargetPosition = -1;
 
-    private int mPlayerScreenMode = PlayerConstants.PLAYER_NORMAL;
+    private ScreenMode mPlayerScreenMode = ScreenMode.NORMAL;
 
     private Context mContext;
     private FrameLayout mContainer;
@@ -88,10 +88,10 @@ public class VideoPlayerRender extends FrameLayout
 
     @Override
     public void start() {
-        if (mCurrentPlayState == PlayerConstants.STATE_IDLE
-                || mCurrentPlayState == PlayerConstants.STATE_ERROR
-                || mCurrentPlayState == PlayerConstants.STATE_COMPLETED) {
-            mTargetPlayState = PlayerConstants.STATE_PLAYING;
+        if (mCurrentPlayState == PlayerState.IDLE
+                || mCurrentPlayState == PlayerState.ERROR
+                || mCurrentPlayState == PlayerState.COMPLETED) {
+            mTargetPlayState = PlayerState.PLAYING;
             initMediaPlayer();
             initTextureView();
             addTextureView();
@@ -100,37 +100,37 @@ public class VideoPlayerRender extends FrameLayout
 
     @Override
     public void resume() {
-        if (mCurrentPlayState == PlayerConstants.STATE_PAUSED || mCurrentPlayState == PlayerConstants.STATE_PREPARED) {
+        if (mCurrentPlayState == PlayerState.PAUSED || mCurrentPlayState == PlayerState.PREPARED) {
             mMediaPlayer.start();
-            mCurrentPlayState = PlayerConstants.STATE_PLAYING;
+            mCurrentPlayState = PlayerState.PLAYING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("STATE_PLAYING");
-        }else if (mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PAUSED) {
+        }else if (mCurrentPlayState == PlayerState.BUFFERING_PAUSED) {
             mMediaPlayer.start();
-            mCurrentPlayState = PlayerConstants.STATE_BUFFERING_PLAYING;
+            mCurrentPlayState = PlayerState.BUFFERING_PLAYING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("STATE_BUFFERING_PLAYING");
-        }else if(mCurrentPlayState == PlayerConstants.STATE_IDLE){
+        }else if(mCurrentPlayState == PlayerState.IDLE){
             openMediaPlayer();
         }
-        mTargetPlayState = PlayerConstants.STATE_PLAYING;
+        mTargetPlayState = PlayerState.PLAYING;
     }
 
     @Override
     public void pause() {
-        if (mCurrentPlayState == PlayerConstants.STATE_PLAYING) {
+        if (mCurrentPlayState == PlayerState.PLAYING) {
             mMediaPlayer.pause();
-            mCurrentPlayState = PlayerConstants.STATE_PAUSED;
+            mCurrentPlayState = PlayerState.PAUSED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("STATE_PAUSED");
         }
-        if (mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PLAYING) {
+        if (mCurrentPlayState == PlayerState.BUFFERING_PLAYING) {
             mMediaPlayer.pause();
-            mCurrentPlayState = PlayerConstants.STATE_BUFFERING_PAUSED;
+            mCurrentPlayState = PlayerState.BUFFERING_PAUSED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("STATE_BUFFERING_PAUSED");
         }
-        mTargetPlayState = PlayerConstants.STATE_PAUSED;
+        mTargetPlayState = PlayerState.PAUSED;
     }
 
     @Override
@@ -139,7 +139,7 @@ public class VideoPlayerRender extends FrameLayout
             if(pos >= 0){
                 mTargetPosition = pos;
                 Log.e(TAG, "pos:"+pos+",state:"+ mPlayerScreenMode);
-                if(mCurrentPlayState != PlayerConstants.STATE_PREPARING && mCurrentPlayState != PlayerConstants.STATE_IDLE && mCurrentPlayState != PlayerConstants.STATE_ERROR){
+                if(mCurrentPlayState != PlayerState.PREPARING && mCurrentPlayState != PlayerState.IDLE && mCurrentPlayState != PlayerState.ERROR){
                     mMediaPlayer.seekTo(pos);
                 }
             }
@@ -153,62 +153,62 @@ public class VideoPlayerRender extends FrameLayout
 
     @Override
     public boolean isIdle() {
-        return mCurrentPlayState == PlayerConstants.STATE_IDLE;
+        return mCurrentPlayState == PlayerState.IDLE;
     }
 
     @Override
     public boolean isPreparing() {
-        return mCurrentPlayState == PlayerConstants.STATE_PREPARING;
+        return mCurrentPlayState == PlayerState.PREPARING;
     }
 
     @Override
     public boolean isPrepared() {
-        return mCurrentPlayState == PlayerConstants.STATE_PREPARED;
+        return mCurrentPlayState == PlayerState.PREPARED;
     }
 
     @Override
     public boolean isBufferingPlaying() {
-        return mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PLAYING;
+        return mCurrentPlayState == PlayerState.BUFFERING_PLAYING;
     }
 
     @Override
     public boolean isBufferingPaused() {
-        return mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PAUSED;
+        return mCurrentPlayState == PlayerState.BUFFERING_PAUSED;
     }
 
     @Override
     public boolean isPlaying() {
-        return mCurrentPlayState == PlayerConstants.STATE_PLAYING;
+        return mCurrentPlayState == PlayerState.PLAYING;
     }
 
     @Override
     public boolean isPaused() {
-        return mCurrentPlayState == PlayerConstants.STATE_PAUSED;
+        return mCurrentPlayState == PlayerState.PAUSED;
     }
 
     @Override
     public boolean isError() {
-        return mCurrentPlayState == PlayerConstants.STATE_ERROR;
+        return mCurrentPlayState == PlayerState.ERROR;
     }
 
     @Override
     public boolean isCompleted() {
-        return mCurrentPlayState == PlayerConstants.STATE_COMPLETED;
+        return mCurrentPlayState == PlayerState.COMPLETED;
     }
 
     @Override
-    public boolean isFullScreen() {
-        return mPlayerScreenMode == PlayerConstants.PLAYER_FULL_SCREEN;
+    public boolean isFullScreenMode() {
+        return mPlayerScreenMode == ScreenMode.FULL_SCREEN;
     }
 
     @Override
-    public boolean isTinyWindow() {
-        return mPlayerScreenMode == PlayerConstants.PLAYER_TINY_WINDOW;
+    public boolean isTinyWindowMode() {
+        return mPlayerScreenMode == ScreenMode.TINY_WINDOW;
     }
 
     @Override
-    public boolean isNormal() {
-        return mPlayerScreenMode == PlayerConstants.PLAYER_NORMAL;
+    public boolean isNormalMode() {
+        return mPlayerScreenMode == ScreenMode.NORMAL;
     }
 
     @Override
@@ -284,7 +284,7 @@ public class VideoPlayerRender extends FrameLayout
             mMediaPlayer.setDataSource(mContext.getApplicationContext(), Uri.parse(mPlayingUrl), mHeaders);
             mMediaPlayer.setSurface(new Surface(mSurfaceTexture));
             mMediaPlayer.prepareAsync();
-            mCurrentPlayState = PlayerConstants.STATE_PREPARING;
+            mCurrentPlayState = PlayerState.PREPARING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("STATE_PREPARING");
         } catch (IOException e) {
@@ -314,16 +314,16 @@ public class VideoPlayerRender extends FrameLayout
         @Override
         public void onPrepared(IMediaPlayer mp) {
             LogUtil.d("onPrepared ——> STATE_PREPARED");
-            mCurrentPlayState = PlayerConstants.STATE_PREPARED;
+            mCurrentPlayState = PlayerState.PREPARED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            if(mTargetPlayState == PlayerConstants.STATE_PLAYING){
+            if(mTargetPlayState == PlayerState.PLAYING){
                 if(mTargetPosition > 0){
                     seekTo(mTargetPosition);
                     mTargetPosition = -1;
                 }else{
                     mp.start();
                 }
-            }else if(mTargetPlayState == PlayerConstants.STATE_PAUSED){
+            }else if(mTargetPlayState == PlayerState.PAUSED){
                 if(mTargetPosition > 0){
                     seekTo(mTargetPosition);
                     mTargetPosition = -1;
@@ -344,8 +344,8 @@ public class VideoPlayerRender extends FrameLayout
             = new IMediaPlayer.OnCompletionListener() {
         @Override
         public void onCompletion(IMediaPlayer mp) {
-            mCurrentPlayState = PlayerConstants.STATE_COMPLETED;
-            mTargetPlayState = PlayerConstants.STATE_IDLE;
+            mCurrentPlayState = PlayerState.COMPLETED;
+            mTargetPlayState = PlayerState.IDLE;
             mTargetPosition = -1;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("onCompletion ——> STATE_COMPLETED");
@@ -356,8 +356,8 @@ public class VideoPlayerRender extends FrameLayout
             = new IMediaPlayer.OnErrorListener() {
         @Override
         public boolean onError(IMediaPlayer mp, int what, int extra) {
-            mCurrentPlayState = PlayerConstants.STATE_ERROR;
-            mTargetPlayState = PlayerConstants.STATE_ERROR;
+            mCurrentPlayState = PlayerState.ERROR;
+            mTargetPlayState = PlayerState.ERROR;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             LogUtil.d("onError ——> STATE_ERROR ———— what：" + what);
             return false;
@@ -370,32 +370,32 @@ public class VideoPlayerRender extends FrameLayout
         public boolean onInfo(IMediaPlayer mp, int what, int extra) {
             if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
                 // 播放器开始渲染
-                if(mTargetPlayState == PlayerConstants.STATE_PLAYING){
-                    mCurrentPlayState = PlayerConstants.STATE_PLAYING;
-                }else if(mTargetPlayState == PlayerConstants.STATE_PAUSED){
-                    mCurrentPlayState = PlayerConstants.STATE_PAUSED;
+                if(mTargetPlayState == PlayerState.PLAYING){
+                    mCurrentPlayState = PlayerState.PLAYING;
+                }else if(mTargetPlayState == PlayerState.PAUSED){
+                    mCurrentPlayState = PlayerState.PAUSED;
                 }
                 mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
                 LogUtil.d("onInfo ——> MEDIA_INFO_VIDEO_RENDERING_START：STATE_PLAYING");
             } else if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_START) {
                 // MediaPlayer暂时不播放，以缓冲更多的数据
-                if (mCurrentPlayState == PlayerConstants.STATE_PAUSED || mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PAUSED || mTargetPlayState == PlayerConstants.STATE_PAUSED) {
-                    mCurrentPlayState = PlayerConstants.STATE_BUFFERING_PAUSED;
+                if (mCurrentPlayState == PlayerState.PAUSED || mCurrentPlayState == PlayerState.BUFFERING_PAUSED || mTargetPlayState == PlayerState.PAUSED) {
+                    mCurrentPlayState = PlayerState.BUFFERING_PAUSED;
                     LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PAUSED");
-                } else if(mTargetPlayState == PlayerConstants.STATE_PLAYING) {
-                    mCurrentPlayState = PlayerConstants.STATE_BUFFERING_PLAYING;
+                } else if(mTargetPlayState == PlayerState.PLAYING) {
+                    mCurrentPlayState = PlayerState.BUFFERING_PLAYING;
                     LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PLAYING");
                 }
                 mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             } else if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_END) {
                 // 填充缓冲区后，MediaPlayer恢复播放/暂停
-                if (mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PLAYING) {
-                    mCurrentPlayState = PlayerConstants.STATE_PLAYING;
+                if (mCurrentPlayState == PlayerState.BUFFERING_PLAYING) {
+                    mCurrentPlayState = PlayerState.PLAYING;
                     mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
                     LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PLAYING");
                 }
-                if (mCurrentPlayState == PlayerConstants.STATE_BUFFERING_PAUSED) {
-                    mCurrentPlayState = PlayerConstants.STATE_PAUSED;
+                if (mCurrentPlayState == PlayerState.BUFFERING_PAUSED) {
+                    mCurrentPlayState = PlayerState.PAUSED;
                     mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
                     LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PAUSED");
                 }
@@ -421,7 +421,7 @@ public class VideoPlayerRender extends FrameLayout
      */
     @Override
     public void enterFullScreen() {
-        if (mPlayerScreenMode == PlayerConstants.PLAYER_FULL_SCREEN) return;
+        if (mPlayerScreenMode == ScreenMode.FULL_SCREEN) return;
 
         // 隐藏ActionBar、状态栏，并横屏
         NiceUtil.hideActionBar(mContext);
@@ -436,9 +436,9 @@ public class VideoPlayerRender extends FrameLayout
                 ViewGroup.LayoutParams.MATCH_PARENT);
         contentView.addView(mContainer, params);
 
-        mPlayerScreenMode = PlayerConstants.PLAYER_FULL_SCREEN;
+        mPlayerScreenMode = ScreenMode.FULL_SCREEN;
         mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-        LogUtil.d("PLAYER_FULL_SCREEN");
+        LogUtil.d("SCREEN_MODE_FULL_SCREEN");
     }
 
     /**
@@ -450,7 +450,7 @@ public class VideoPlayerRender extends FrameLayout
      */
     @Override
     public boolean exitFullScreen() {
-        if (mPlayerScreenMode == PlayerConstants.PLAYER_FULL_SCREEN) {
+        if (mPlayerScreenMode == ScreenMode.FULL_SCREEN) {
             NiceUtil.showActionBar(mContext);
             NiceUtil.scanForActivity(mContext)
                     .setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -463,9 +463,9 @@ public class VideoPlayerRender extends FrameLayout
                     ViewGroup.LayoutParams.MATCH_PARENT);
             this.addView(mContainer, params);
 
-            mPlayerScreenMode = PlayerConstants.PLAYER_NORMAL;
+            mPlayerScreenMode = ScreenMode.NORMAL;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("PLAYER_NORMAL");
+            LogUtil.d("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
@@ -476,7 +476,7 @@ public class VideoPlayerRender extends FrameLayout
      */
     @Override
     public void enterTinyWindow() {
-        if (mPlayerScreenMode == PlayerConstants.PLAYER_TINY_WINDOW) return;
+        if (mPlayerScreenMode == ScreenMode.TINY_WINDOW) return;
         this.removeView(mContainer);
 
         ViewGroup contentView = (ViewGroup) NiceUtil.scanForActivity(mContext)
@@ -491,9 +491,9 @@ public class VideoPlayerRender extends FrameLayout
 
         contentView.addView(mContainer, params);
 
-        mPlayerScreenMode = PlayerConstants.PLAYER_TINY_WINDOW;
+        mPlayerScreenMode = ScreenMode.TINY_WINDOW;
         mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-        LogUtil.d("PLAYER_TINY_WINDOW");
+        LogUtil.d("SCREEN_MODE_TINY_WINDOW");
     }
 
     /**
@@ -501,7 +501,7 @@ public class VideoPlayerRender extends FrameLayout
      */
     @Override
     public boolean exitTinyWindow() {
-        if (mPlayerScreenMode == PlayerConstants.PLAYER_TINY_WINDOW) {
+        if (mPlayerScreenMode == ScreenMode.TINY_WINDOW) {
             ViewGroup contentView = (ViewGroup) NiceUtil.scanForActivity(mContext)
                     .findViewById(android.R.id.content);
             contentView.removeView(mContainer);
@@ -510,9 +510,9 @@ public class VideoPlayerRender extends FrameLayout
                     ViewGroup.LayoutParams.MATCH_PARENT);
             this.addView(mContainer, params);
 
-            mPlayerScreenMode = PlayerConstants.PLAYER_NORMAL;
+            mPlayerScreenMode = ScreenMode.NORMAL;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("PLAYER_NORMAL");
+            LogUtil.d("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
@@ -532,9 +532,9 @@ public class VideoPlayerRender extends FrameLayout
         if (mViewer != null) {
             mViewer.reset();
         }
-        mCurrentPlayState = PlayerConstants.STATE_IDLE;
-        mPlayerScreenMode = PlayerConstants.PLAYER_NORMAL;
-        mTargetPlayState = PlayerConstants.STATE_IDLE;
+        mCurrentPlayState = PlayerState.IDLE;
+        mPlayerScreenMode = ScreenMode.NORMAL;
+        mTargetPlayState = PlayerState.IDLE;
     }
 
     public void setViewer(VideoPlayerContract.View viewer) {

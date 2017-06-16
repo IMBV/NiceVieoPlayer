@@ -15,22 +15,20 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 /**
- * Created by XiaoJianjun on 2017/4/28.
- * 播放器控制器.
+ * 播放器按钮控制器
  */
 public class VideoPlayerView extends FrameLayout
         implements View.OnClickListener,VideoPlayerContract.View,
         SeekBar.OnSeekBarChangeListener {
 
     private final int MSG_TYPE_DISMISS_DELAY = 1000;
+    private final int MSG_TYPE_UPDATE_PROGRESS = 1001;
     private final long DISMISS_DELAY = 8000;
+    private final long UPDATE_PROGRESS_DELAY = 300;
 
     private Handler mUiHandler;
-    private VideoPlayerContract.Presenter mNiceVideoPlayer;
+    private VideoPlayerContract.Presenter mPresenter;
     private ImageView mImage;
     private ImageView mCenterStart;
     private LinearLayout mTop;
@@ -50,9 +48,7 @@ public class VideoPlayerView extends FrameLayout
     private TextView mReplay;
     private TextView mShare;
 
-    private Timer mUpdateProgressTimer;
-    private TimerTask mUpdateProgressTimerTask;
-    private boolean topBottomVisible;
+    private boolean mTopBottomVisible;
 
     public VideoPlayerView(Context context) {
         super(context);
@@ -117,40 +113,40 @@ public class VideoPlayerView extends FrameLayout
     @Override
     public void onClick(View v) {
         if (v == mCenterStart) {
-            if (mNiceVideoPlayer.isIdle()) {
-                mNiceVideoPlayer.start();
+            if (mPresenter.isIdle()) {
+                mPresenter.start();
             }
         } else if (v == mBack) {
-            if (mNiceVideoPlayer.isFullScreen()) {
-                mNiceVideoPlayer.exitFullScreen();
-            } else if (mNiceVideoPlayer.isTinyWindow()) {
-                mNiceVideoPlayer.exitTinyWindow();
+            if (mPresenter.isFullScreenMode()) {
+                mPresenter.exitFullScreen();
+            } else if (mPresenter.isTinyWindowMode()) {
+                mPresenter.exitTinyWindow();
             }
         } else if (v == mRestartPause) {
-            if (mNiceVideoPlayer.isPlaying() || mNiceVideoPlayer.isBufferingPlaying()) {
-                mNiceVideoPlayer.pause();
-            } else if (mNiceVideoPlayer.isPaused() || mNiceVideoPlayer.isBufferingPaused()) {
-                mNiceVideoPlayer.resume();
+            if (mPresenter.isPlaying() || mPresenter.isBufferingPlaying()) {
+                mPresenter.pause();
+            } else if (mPresenter.isPaused() || mPresenter.isBufferingPaused()) {
+                mPresenter.resume();
             }
         } else if (v == mFullScreen) {
-            if (mNiceVideoPlayer.isNormal()) {
-                mNiceVideoPlayer.enterFullScreen();
-            } else if (mNiceVideoPlayer.isFullScreen()) {
-                mNiceVideoPlayer.exitFullScreen();
+            if (mPresenter.isNormalMode()) {
+                mPresenter.enterFullScreen();
+            } else if (mPresenter.isFullScreenMode()) {
+                mPresenter.exitFullScreen();
             }
         } else if (v == mRetry) {
-            mNiceVideoPlayer.stop();
-            mNiceVideoPlayer.start();
+            mPresenter.stop();
+            mPresenter.start();
         } else if (v == mReplay) {
             mRetry.performClick();
         } else if (v == mShare) {
             Toast.makeText(getContext(), "分享", Toast.LENGTH_SHORT).show();
         } else if (v == this) {
-            if (mNiceVideoPlayer.isPlaying()
-                    || mNiceVideoPlayer.isPaused()
-                    || mNiceVideoPlayer.isBufferingPlaying()
-                    || mNiceVideoPlayer.isBufferingPaused()) {
-                setTopBottomVisible(!topBottomVisible);
+            if (mPresenter.isPlaying()
+                    || mPresenter.isPaused()
+                    || mPresenter.isBufferingPlaying()
+                    || mPresenter.isBufferingPaused()) {
+                setTopBottomVisible(!mTopBottomVisible);
             }
         }
     }
@@ -158,9 +154,9 @@ public class VideoPlayerView extends FrameLayout
     private void setTopBottomVisible(boolean visible) {
         mTop.setVisibility(visible ? View.VISIBLE : View.GONE);
         mBottom.setVisibility(visible ? View.VISIBLE : View.GONE);
-        topBottomVisible = visible;
+        mTopBottomVisible = visible;
         if (visible) {
-            if (!mNiceVideoPlayer.isPaused() && !mNiceVideoPlayer.isBufferingPaused()) {
+            if (!mPresenter.isPaused() && !mPresenter.isBufferingPaused()) {
                 startDismissTopBottomTimer();
             }
         } else {
@@ -169,108 +165,84 @@ public class VideoPlayerView extends FrameLayout
     }
 
     @Override
-    public void onPlayerStateChanged(int playerState, int playState) {
-
-        switch (playerState) {
-            case NiceVideoPlayer.PLAYER_NORMAL:
-                mBack.setVisibility(View.GONE);
-                mFullScreen.setVisibility(View.VISIBLE);
-                mFullScreen.setImageResource(R.drawable.ic_player_enlarge);
-                break;
-            case NiceVideoPlayer.PLAYER_FULL_SCREEN:
-                mBack.setVisibility(View.VISIBLE);
-                mFullScreen.setVisibility(View.VISIBLE);
-                mFullScreen.setImageResource(R.drawable.ic_player_shrink);
-                break;
-            case NiceVideoPlayer.PLAYER_TINY_WINDOW:
-                mFullScreen.setVisibility(View.GONE);
-                break;
+    public void onPlayerStateChanged(ScreenMode screenMode, PlayerState playState) {
+        if(screenMode == ScreenMode.NORMAL){
+            mBack.setVisibility(View.GONE);
+            mFullScreen.setVisibility(View.VISIBLE);
+            mFullScreen.setImageResource(R.drawable.ic_player_enlarge);
+        }else if(screenMode == ScreenMode.FULL_SCREEN){
+            mBack.setVisibility(View.VISIBLE);
+            mFullScreen.setVisibility(View.VISIBLE);
+            mFullScreen.setImageResource(R.drawable.ic_player_shrink);
+        }else if(screenMode == ScreenMode.TINY_WINDOW){
+            mFullScreen.setVisibility(View.GONE);
+        }else{
+            //todo: error
         }
-        switch (playState) {
-            case NiceVideoPlayer.STATE_IDLE:
-                break;
-            case NiceVideoPlayer.STATE_PREPARING:
-                // 只显示准备中动画，其他不显示
-                mImage.setVisibility(View.GONE);
-                mLoading.setVisibility(View.VISIBLE);
-                mLoadText.setText("正在准备...");
-                mError.setVisibility(View.GONE);
-                mCompleted.setVisibility(View.GONE);
-                mTop.setVisibility(View.GONE);
-                mCenterStart.setVisibility(View.GONE);
-                break;
-            case NiceVideoPlayer.STATE_PREPARED:
-                startUpdateProgressTimer();
-                break;
-            case NiceVideoPlayer.STATE_PLAYING:
-                mLoading.setVisibility(View.GONE);
-                mRestartPause.setImageResource(R.drawable.ic_player_pause);
-                startDismissTopBottomTimer();
-                break;
-            case NiceVideoPlayer.STATE_PAUSED:
-                mLoading.setVisibility(View.GONE);
-                mRestartPause.setImageResource(R.drawable.ic_player_start);
-                cancelDismissTopBottomTimer();
-                break;
-            case NiceVideoPlayer.STATE_BUFFERING_PLAYING:
-                mLoading.setVisibility(View.VISIBLE);
-                mRestartPause.setImageResource(R.drawable.ic_player_pause);
-                mLoadText.setText("正在缓冲...");
-                startDismissTopBottomTimer();
-                break;
-            case NiceVideoPlayer.STATE_BUFFERING_PAUSED:
-                mLoading.setVisibility(View.VISIBLE);
-                mRestartPause.setImageResource(R.drawable.ic_player_start);
-                mLoadText.setText("正在缓冲...");
-                cancelDismissTopBottomTimer();
-                break;
-            case NiceVideoPlayer.STATE_COMPLETED:
-                cancelUpdateProgressTimer();
-                setTopBottomVisible(false);
-                mImage.setVisibility(View.VISIBLE);
-                mCompleted.setVisibility(View.VISIBLE);
-                if (mNiceVideoPlayer.isFullScreen()) {
-                    mNiceVideoPlayer.exitFullScreen();
-                }
-                if (mNiceVideoPlayer.isTinyWindow()) {
-                    mNiceVideoPlayer.exitTinyWindow();
-                }
-//                mNiceVideoPlayer.stop();
-                break;
-            case NiceVideoPlayer.STATE_ERROR:
-                cancelUpdateProgressTimer();
-                setTopBottomVisible(false);
-                mTop.setVisibility(View.VISIBLE);
-                mError.setVisibility(View.VISIBLE);
-                break;
+
+
+        if(playState == PlayerState.IDLE){
+
+        }else if(playState == PlayerState.PREPARING){
+            // 只显示准备中动画，其他不显示
+            mImage.setVisibility(View.GONE);
+            mLoading.setVisibility(View.VISIBLE);
+            mLoadText.setText("正在准备...");
+            mError.setVisibility(View.GONE);
+            mCompleted.setVisibility(View.GONE);
+            mTop.setVisibility(View.GONE);
+            mCenterStart.setVisibility(View.GONE);
+        }else if(playState == PlayerState.PREPARED){
+            startUpdateProgressTimer();
+        }else if(playState == PlayerState.PLAYING){
+            mLoading.setVisibility(View.GONE);
+            mRestartPause.setImageResource(R.drawable.ic_player_pause);
+            startDismissTopBottomTimer();
+        }else if(playState == PlayerState.PAUSED){
+            mLoading.setVisibility(View.GONE);
+            mRestartPause.setImageResource(R.drawable.ic_player_start);
+            cancelDismissTopBottomTimer();
+        }else if(playState == PlayerState.BUFFERING_PLAYING){
+            mLoading.setVisibility(View.VISIBLE);
+            mRestartPause.setImageResource(R.drawable.ic_player_pause);
+            mLoadText.setText("正在缓冲...");
+            startDismissTopBottomTimer();
+        }else if(playState == PlayerState.BUFFERING_PAUSED){
+            mLoading.setVisibility(View.VISIBLE);
+            mRestartPause.setImageResource(R.drawable.ic_player_start);
+            mLoadText.setText("正在缓冲...");
+            cancelDismissTopBottomTimer();
+        }else if(playState == PlayerState.COMPLETED){
+            cancelUpdateProgressTimer();
+            setTopBottomVisible(false);
+            mImage.setVisibility(View.VISIBLE);
+            mCompleted.setVisibility(View.VISIBLE);
+            if (mPresenter.isFullScreenMode()) {
+                mPresenter.exitFullScreen();
+            }
+            if (mPresenter.isTinyWindowMode()) {
+                mPresenter.exitTinyWindow();
+            }
+//                mPresenter.stop();
+        }else if(playState == PlayerState.ERROR){
+            cancelUpdateProgressTimer();
+            setTopBottomVisible(false);
+            mTop.setVisibility(View.VISIBLE);
+            mError.setVisibility(View.VISIBLE);
+        }else{
+            //todo: log error
         }
     }
 
     private void startUpdateProgressTimer() {
         cancelUpdateProgressTimer();
-        if (mUpdateProgressTimer == null) {
-            mUpdateProgressTimer = new Timer();
-        }
-        if (mUpdateProgressTimerTask == null) {
-            mUpdateProgressTimerTask = new TimerTask() {
-                @Override
-                public void run() {
-                    VideoPlayerView.this.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            updateProgress();
-                        }
-                    });
-                }
-            };
-        }
-        mUpdateProgressTimer.schedule(mUpdateProgressTimerTask, 0, 300);
+        mUiHandler.sendEmptyMessageDelayed(MSG_TYPE_UPDATE_PROGRESS, UPDATE_PROGRESS_DELAY);
     }
 
     private void updateProgress() {
-        long position = mNiceVideoPlayer.getCurrentPosition();
-        long duration = mNiceVideoPlayer.getDuration();
-        int bufferPercentage = mNiceVideoPlayer.getBufferPercentage();
+        long position = mPresenter.getCurrentPosition();
+        long duration = mPresenter.getDuration();
+        int bufferPercentage = mPresenter.getBufferPercentage();
         mSeek.setSecondaryProgress(bufferPercentage);
         int progress = (int) (100f * position / duration);
         mSeek.setProgress(progress);
@@ -279,14 +251,7 @@ public class VideoPlayerView extends FrameLayout
     }
 
     private void cancelUpdateProgressTimer() {
-        if (mUpdateProgressTimer != null) {
-            mUpdateProgressTimer.cancel();
-            mUpdateProgressTimer = null;
-        }
-        if (mUpdateProgressTimerTask != null) {
-            mUpdateProgressTimerTask.cancel();
-            mUpdateProgressTimerTask = null;
-        }
+        mUiHandler.removeMessages(MSG_TYPE_UPDATE_PROGRESS);
     }
 
     private void startDismissTopBottomTimer() {
@@ -303,7 +268,6 @@ public class VideoPlayerView extends FrameLayout
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mUiHandler.removeCallbacksAndMessages(null);
-
     }
 
     @Override
@@ -318,11 +282,11 @@ public class VideoPlayerView extends FrameLayout
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        if (mNiceVideoPlayer.isBufferingPaused() || mNiceVideoPlayer.isPaused()) {
-            mNiceVideoPlayer.resume();
+        if (mPresenter.isBufferingPaused() || mPresenter.isPaused()) {
+            mPresenter.resume();
         }
-        int position = (int) (mNiceVideoPlayer.getDuration() * seekBar.getProgress() / 100f);
-        mNiceVideoPlayer.seekTo(position);
+        int position = (int) (mPresenter.getDuration() * seekBar.getProgress() / 100f);
+        mPresenter.seekTo(position);
         startDismissTopBottomTimer();
     }
 
@@ -331,7 +295,7 @@ public class VideoPlayerView extends FrameLayout
      */
     @Override
     public void reset() {
-        topBottomVisible = false;
+        mTopBottomVisible = false;
         cancelUpdateProgressTimer();
         cancelDismissTopBottomTimer();
         mSeek.setProgress(0);
@@ -353,8 +317,8 @@ public class VideoPlayerView extends FrameLayout
 
     @Override
     public void setPresenter(VideoPlayerContract.Presenter presenter) {
-        mNiceVideoPlayer = presenter;
-        if (mNiceVideoPlayer.isIdle()) {
+        mPresenter = presenter;
+        if (mPresenter.isIdle()) {
             mBack.setVisibility(View.GONE);
             mTop.setVisibility(View.VISIBLE);
             mBottom.setVisibility(View.GONE);
@@ -372,6 +336,10 @@ public class VideoPlayerView extends FrameLayout
             switch (msg.what){
                 case MSG_TYPE_DISMISS_DELAY:
                     setTopBottomVisible(false);
+                    break;
+                case MSG_TYPE_UPDATE_PROGRESS:
+                    updateProgress();
+                    startUpdateProgressTimer();
                     break;
             }
             return true;

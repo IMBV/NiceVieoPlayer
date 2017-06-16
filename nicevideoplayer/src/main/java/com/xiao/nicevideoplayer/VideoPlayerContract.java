@@ -12,7 +12,7 @@ public class VideoPlayerContract {
 
     public interface View{
 
-        void onPlayerStateChanged(int playerState, int playState);
+        void onPlayerStateChanged(ScreenMode screenMode, PlayerState playState);
 
         void reset();
 
@@ -47,9 +47,9 @@ public class VideoPlayerContract {
         boolean isError();
         boolean isCompleted();
 
-        boolean isFullScreen();
-        boolean isTinyWindow();
-        boolean isNormal();
+        boolean isFullScreenMode();
+        boolean isTinyWindowMode();
+        boolean isNormalMode();
 
         long getDuration();
         long getCurrentPosition();

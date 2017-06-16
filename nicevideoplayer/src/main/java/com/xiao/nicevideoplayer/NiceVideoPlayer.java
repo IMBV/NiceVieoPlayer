@@ -423,7 +423,7 @@ public class NiceVideoPlayer extends FrameLayout
 
         mPlayerState = PLAYER_FULL_SCREEN;
         mController.setControllerState(mPlayerState, mCurrentState);
-        LogUtil.d("PLAYER_FULL_SCREEN");
+        LogUtil.d("SCREEN_MODE_FULL_SCREEN");
     }
 
     /**
@@ -450,7 +450,7 @@ public class NiceVideoPlayer extends FrameLayout
 
             mPlayerState = PLAYER_NORMAL;
             mController.setControllerState(mPlayerState, mCurrentState);
-            LogUtil.d("PLAYER_NORMAL");
+            LogUtil.d("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
@@ -478,7 +478,7 @@ public class NiceVideoPlayer extends FrameLayout
 
         mPlayerState = PLAYER_TINY_WINDOW;
         mController.setControllerState(mPlayerState, mCurrentState);
-        LogUtil.d("PLAYER_TINY_WINDOW");
+        LogUtil.d("SCREEN_MODE_TINY_WINDOW");
     }
 
     /**
@@ -497,7 +497,7 @@ public class NiceVideoPlayer extends FrameLayout
 
             mPlayerState = PLAYER_NORMAL;
             mController.setControllerState(mPlayerState, mCurrentState);
-            LogUtil.d("PLAYER_NORMAL");
+            LogUtil.d("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
