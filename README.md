@@ -51,3 +51,20 @@ mRecyclerView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttach
 ![](https://github.com/xiaoyanger0825/NiceVieoPlayer/raw/master/images/bb.jpg)
 ![](https://github.com/xiaoyanger0825/NiceVieoPlayer/raw/master/images/cc.jpg)
 ![](https://github.com/xiaoyanger0825/NiceVieoPlayer/raw/master/images/dd.jpg)
+
+# 个人工程fix的bug
+
+1. Activity在缓冲中，不能正确的pause
+2. Activity由于后台进程占用过多，在onsaveState后，不能保存状态
+3. seekTo（），onInfoListener（）调用时，状态没有正确的判断，导致部分情况下，seekTo（）吾贤，以及onInfoListenrer（）的部分处理无效
+
+
+# 个人优化
+1. 采用MVP的方式，书写VideoPlayerView和VideoPlayerRender，防止了双向调用，数据操作流向不清晰
+2. 删除NiceVideoPlayerController之前CountDownTimer和Timer的方式，避免采用不必要的开销，采用Handler的处理即可
+3. 优化了之前变量的定义，PlayerState和PlayState，难以理解，采用了ScreenMode和PlayerState的Enum方式，方便理解
+
+
+#TODO:
+
+1. 滑动列表中的改造
