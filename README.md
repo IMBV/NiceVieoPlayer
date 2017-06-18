@@ -56,7 +56,7 @@ mRecyclerView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttach
 
 1. Activity在缓冲中，不能正确的pause
 2. Activity由于后台进程占用过多，在onsaveState后，不能保存状态
-3. seekTo（），onInfoListener（）调用时，状态没有正确的判断，导致部分情况下，seekTo（）吾贤，以及onInfoListenrer（）的部分处理无效
+3. seekTo（），onInfoListener（）调用时，状态没有正确的判断，导致部分情况下，seekTo（）无效，以及onInfoListenrer（）的部分处理无效
 
 
 # 个人优化
