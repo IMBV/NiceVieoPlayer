@@ -22,7 +22,7 @@ public class TestActivity extends AppCompatActivity {
     private static final String SAVED_KEY_URL = "url";
 
     private VideoPlayerContract.Presenter mPresenter;
-    private boolean mPausedByUser;
+    private boolean mPausedBySystem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +76,7 @@ public class TestActivity extends AppCompatActivity {
 
     @Override
     protected void onResume() {
-        if(mPausedByUser && (mPresenter.isPaused() || mPresenter.isBufferingPaused())){
+        if(mPausedBySystem && (mPresenter.isPaused() || mPresenter.isBufferingPaused())){
             mPresenter.resume();
         }
         super.onResume();
@@ -97,9 +97,9 @@ public class TestActivity extends AppCompatActivity {
     protected void onPause() {
         if(mPresenter.isBufferingPlaying() || mPresenter.isPlaying()){
             mPresenter.pause();
-            mPausedByUser = true;
+            mPausedBySystem = true;
         }else{
-            mPausedByUser = false;
+            mPausedBySystem = false;
         }
         super.onPause();
     }

@@ -17,4 +17,8 @@ public class LogUtil {
     public static void e(String message, Throwable throwable) {
         Log.e(TAG, message, throwable);
     }
+
+    public static void e(String message) {
+        e(message, null);
+    }
 }

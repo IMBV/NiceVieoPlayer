@@ -31,6 +31,7 @@ public class VideoPlayerRender extends FrameLayout
         implements VideoPlayerContract.Presenter,
         TextureView.SurfaceTextureListener {
     private final String TAG = this.getClass().getSimpleName();
+    private final boolean mEnableLog = true;
 
     private int mPlayerType = PlayerConstants.PLAYER_TYPE_IJK;
     private PlayerState mCurrentPlayState = PlayerState.IDLE;
@@ -100,45 +101,49 @@ public class VideoPlayerRender extends FrameLayout
 
     @Override
     public void resume() {
+        log("resume");
+        mTargetPlayState = PlayerState.PLAYING;
+        log("targe state:"+mTargetPlayState);
         if (mCurrentPlayState == PlayerState.PAUSED || mCurrentPlayState == PlayerState.PREPARED) {
             mMediaPlayer.start();
             mCurrentPlayState = PlayerState.PLAYING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("STATE_PLAYING");
+            log("STATE_PLAYING");
         }else if (mCurrentPlayState == PlayerState.BUFFERING_PAUSED) {
             mMediaPlayer.start();
             mCurrentPlayState = PlayerState.BUFFERING_PLAYING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("STATE_BUFFERING_PLAYING");
+            log("STATE_BUFFERING_PLAYING");
         }else if(mCurrentPlayState == PlayerState.IDLE){
             openMediaPlayer();
         }
-        mTargetPlayState = PlayerState.PLAYING;
     }
 
     @Override
     public void pause() {
+        log("pause");
+        mTargetPlayState = PlayerState.PAUSED;
+        log("targe state:"+mTargetPlayState);
         if (mCurrentPlayState == PlayerState.PLAYING) {
             mMediaPlayer.pause();
             mCurrentPlayState = PlayerState.PAUSED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("STATE_PAUSED");
         }
         if (mCurrentPlayState == PlayerState.BUFFERING_PLAYING) {
             mMediaPlayer.pause();
             mCurrentPlayState = PlayerState.BUFFERING_PAUSED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("STATE_BUFFERING_PAUSED");
         }
-        mTargetPlayState = PlayerState.PAUSED;
+
     }
 
     @Override
     public void seekTo(int pos) {
+        log("seekTo:"+pos);
         if (mMediaPlayer != null) {
             if(pos >= 0){
                 mTargetPosition = pos;
-                Log.e(TAG, "pos:"+pos+",state:"+ mPlayerScreenMode);
+                log("pos:"+pos+",state:"+ mPlayerScreenMode);
                 if(mCurrentPlayState != PlayerState.PREPARING && mCurrentPlayState != PlayerState.IDLE && mCurrentPlayState != PlayerState.ERROR){
                     mMediaPlayer.seekTo(pos);
                 }
@@ -266,7 +271,7 @@ public class VideoPlayerRender extends FrameLayout
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
-        LogUtil.e("onSurfaceTextureAvailable", null);
+        log("onSurfaceTextureAvailable", null);
         if (mSurfaceTexture == null) {
             mSurfaceTexture = surfaceTexture;
             openMediaPlayer();
@@ -286,34 +291,34 @@ public class VideoPlayerRender extends FrameLayout
             mMediaPlayer.prepareAsync();
             mCurrentPlayState = PlayerState.PREPARING;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("STATE_PREPARING");
+            log("STATE_PREPARING");
         } catch (IOException e) {
             e.printStackTrace();
-            LogUtil.e("打开播放器发生错误", e);
+            log("打开播放器发生错误"+e.toString(), e);
         }
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        LogUtil.e("onSurfaceTextureSizeChanged", null);
+        log("onSurfaceTextureSizeChanged", null);
     }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-        LogUtil.e("onSurfaceTextureDestroyed", null);
+        log("onSurfaceTextureDestroyed", null);
         return mSurfaceTexture == null;
     }
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-//        LogUtil.e("onSurfaceTextureUpdated", null);
+//        log("onSurfaceTextureUpdated", null);
     }
 
     private IMediaPlayer.OnPreparedListener mOnPreparedListener
             = new IMediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(IMediaPlayer mp) {
-            LogUtil.d("onPrepared ——> STATE_PREPARED");
+            log("onPrepared ——> STATE_PREPARED");
             mCurrentPlayState = PlayerState.PREPARED;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             if(mTargetPlayState == PlayerState.PLAYING){
@@ -336,7 +341,7 @@ public class VideoPlayerRender extends FrameLayout
             = new IMediaPlayer.OnVideoSizeChangedListener() {
         @Override
         public void onVideoSizeChanged(IMediaPlayer mp, int width, int height, int sar_num, int sar_den) {
-            LogUtil.d("onVideoSizeChanged ——> width：" + width + "，height：" + height);
+            log("onVideoSizeChanged ——> width：" + width + "，height：" + height);
         }
     };
 
@@ -348,7 +353,7 @@ public class VideoPlayerRender extends FrameLayout
             mTargetPlayState = PlayerState.IDLE;
             mTargetPosition = -1;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("onCompletion ——> STATE_COMPLETED");
+            log("onCompletion ——> STATE_COMPLETED");
         }
     };
 
@@ -359,7 +364,7 @@ public class VideoPlayerRender extends FrameLayout
             mCurrentPlayState = PlayerState.ERROR;
             mTargetPlayState = PlayerState.ERROR;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("onError ——> STATE_ERROR ———— what：" + what);
+            log("onError ——> STATE_ERROR ———— what：" + what);
             return false;
         }
     };
@@ -369,6 +374,7 @@ public class VideoPlayerRender extends FrameLayout
         @Override
         public boolean onInfo(IMediaPlayer mp, int what, int extra) {
             if (what == MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START) {
+                log("onInfo ——> MEDIA_INFO_VIDEO_RENDERING_START");
                 // 播放器开始渲染
                 if(mTargetPlayState == PlayerState.PLAYING){
                     mCurrentPlayState = PlayerState.PLAYING;
@@ -376,31 +382,33 @@ public class VideoPlayerRender extends FrameLayout
                     mCurrentPlayState = PlayerState.PAUSED;
                 }
                 mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-                LogUtil.d("onInfo ——> MEDIA_INFO_VIDEO_RENDERING_START：STATE_PLAYING");
+                log("onInfo ——> MEDIA_INFO_VIDEO_RENDERING_START：STATE_PLAYING");
             } else if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_START) {
+                log("onInfo ——> MEDIA_INFO_BUFFERING_START");
                 // MediaPlayer暂时不播放，以缓冲更多的数据
-                if (mCurrentPlayState == PlayerState.PAUSED || mCurrentPlayState == PlayerState.BUFFERING_PAUSED || mTargetPlayState == PlayerState.PAUSED) {
+                if (mTargetPlayState == PlayerState.PAUSED) {
                     mCurrentPlayState = PlayerState.BUFFERING_PAUSED;
-                    LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PAUSED");
+                    log("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PAUSED");
                 } else if(mTargetPlayState == PlayerState.PLAYING) {
                     mCurrentPlayState = PlayerState.BUFFERING_PLAYING;
-                    LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PLAYING");
+                    log("onInfo ——> MEDIA_INFO_BUFFERING_START：STATE_BUFFERING_PLAYING");
                 }
                 mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
             } else if (what == IMediaPlayer.MEDIA_INFO_BUFFERING_END) {
+                log("onInfo ——> MEDIA_INFO_BUFFERING_END");
                 // 填充缓冲区后，MediaPlayer恢复播放/暂停
                 if (mCurrentPlayState == PlayerState.BUFFERING_PLAYING) {
                     mCurrentPlayState = PlayerState.PLAYING;
                     mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-                    LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PLAYING");
+                    log("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PLAYING");
                 }
                 if (mCurrentPlayState == PlayerState.BUFFERING_PAUSED) {
                     mCurrentPlayState = PlayerState.PAUSED;
                     mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-                    LogUtil.d("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PAUSED");
+                    log("onInfo ——> MEDIA_INFO_BUFFERING_END： STATE_PAUSED");
                 }
             } else {
-                LogUtil.d("onInfo ——> what：" + what);
+                log("onInfo ——> what：" + what);
             }
             return true;
         }
@@ -438,7 +446,7 @@ public class VideoPlayerRender extends FrameLayout
 
         mPlayerScreenMode = ScreenMode.FULL_SCREEN;
         mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-        LogUtil.d("SCREEN_MODE_FULL_SCREEN");
+        log("SCREEN_MODE_FULL_SCREEN");
     }
 
     /**
@@ -465,7 +473,7 @@ public class VideoPlayerRender extends FrameLayout
 
             mPlayerScreenMode = ScreenMode.NORMAL;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("SCREEN_MODE_NORMAL");
+            log("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
@@ -493,7 +501,7 @@ public class VideoPlayerRender extends FrameLayout
 
         mPlayerScreenMode = ScreenMode.TINY_WINDOW;
         mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-        LogUtil.d("SCREEN_MODE_TINY_WINDOW");
+        log("SCREEN_MODE_TINY_WINDOW");
     }
 
     /**
@@ -512,7 +520,7 @@ public class VideoPlayerRender extends FrameLayout
 
             mPlayerScreenMode = ScreenMode.NORMAL;
             mViewer.onPlayerStateChanged(mPlayerScreenMode, mCurrentPlayState);
-            LogUtil.d("SCREEN_MODE_NORMAL");
+            log("SCREEN_MODE_NORMAL");
             return true;
         }
         return false;
@@ -545,5 +553,17 @@ public class VideoPlayerRender extends FrameLayout
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         mContainer.addView(mViewer.asView(), params);
+    }
+
+    private void log(String info){
+        if(mEnableLog){
+            Log.e(TAG, info);
+        }
+    }
+
+    private void log(String info, Throwable throwable){
+        if(mEnableLog){
+            Log.e(TAG, info, throwable);
+        }
     }
 }
