@@ -6,6 +6,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.DrawableRes;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -22,6 +23,7 @@ public class VideoPlayerView extends FrameLayout
         implements View.OnClickListener,VideoPlayerContract.View,
         SeekBar.OnSeekBarChangeListener {
 
+    private static final String TAG = "VideoPlayerView";
     private final int MSG_TYPE_DISMISS_DELAY = 1000;
     private final int MSG_TYPE_UPDATE_PROGRESS = 1001;
     private final long DISMISS_DELAY = 8000;
@@ -235,11 +237,13 @@ public class VideoPlayerView extends FrameLayout
     }
 
     private void startUpdateProgressTimer() {
+        Log.e(TAG, "startUpdateProgressTimer");
         cancelUpdateProgressTimer();
         mUiHandler.sendEmptyMessageDelayed(MSG_TYPE_UPDATE_PROGRESS, UPDATE_PROGRESS_DELAY);
     }
 
     private void updateProgress() {
+        Log.e(TAG, "updateProgress");
         long position = mPresenter.getCurrentPosition();
         long duration = mPresenter.getDuration();
         int bufferPercentage = mPresenter.getBufferPercentage();
@@ -252,6 +256,7 @@ public class VideoPlayerView extends FrameLayout
 
     private void cancelUpdateProgressTimer() {
         mUiHandler.removeMessages(MSG_TYPE_UPDATE_PROGRESS);
+        Log.e(TAG, "cancelUpdateProgressTimer");
     }
 
     private void startDismissTopBottomTimer() {
@@ -262,12 +267,6 @@ public class VideoPlayerView extends FrameLayout
 
     private void cancelDismissTopBottomTimer() {
         mUiHandler.removeMessages(MSG_TYPE_DISMISS_DELAY);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        mUiHandler.removeCallbacksAndMessages(null);
     }
 
     @Override

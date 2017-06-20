@@ -7,6 +7,7 @@ import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -273,10 +274,23 @@ public class VideoPlayerRender extends FrameLayout
     public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
         log("onSurfaceTextureAvailable", null);
         if (mSurfaceTexture == null) {
+            log("onSurfaceTextureAvailable, it not exists opening---------");
             mSurfaceTexture = surfaceTexture;
             openMediaPlayer();
         } else {
-            mTextureView.setSurfaceTexture(mSurfaceTexture);
+            log("onSurfaceTextureAvailable, it exists updating-------");
+//            mTextureView.setSurfaceTexture(mSurfaceTexture);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN){
+                mTextureView.setSurfaceTexture(mSurfaceTexture);
+            }else{
+                //todo: 考虑当前帧是否保留
+                mSurfaceTexture.release();
+                mSurfaceTexture = surfaceTexture;
+                if(mMediaPlayer != null){
+                    mMediaPlayer.setSurface(new Surface(mSurfaceTexture));
+                }
+            }
+
         }
     }
 
