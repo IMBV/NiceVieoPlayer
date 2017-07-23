@@ -6,12 +6,21 @@ import com.xiao.nicevideoplayer.VideoPlayerView;
 import com.xiao.nicevieoplayer.R;
 
 import android.content.Intent;
+import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v4.media.MediaMetadataCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
+
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class TestActivity extends AppCompatActivity {
 
@@ -23,13 +32,35 @@ public class TestActivity extends AppCompatActivity {
 
     private VideoPlayerContract.Presenter mPresenter;
     private boolean mPausedBySystem;
+    private MediaMetadataRetriever mMetadataCompatRetriever = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
-        init();
-        restorePlayerInfoIfExists(savedInstanceState);
+        mMetadataCompatRetriever = new MediaMetadataRetriever();
+        File file = new File("/sdcard/zapya/video/");
+        for(File subFile : file.listFiles()){
+            if(subFile.isFile()){
+                showMediaInfo(subFile.getAbsolutePath());
+            }
+        }
+
+
+//        init();
+//        restorePlayerInfoIfExists(savedInstanceState);
+    }
+
+    private void showMediaInfo(String path) {
+        File file = new File(path);
+        Log.e(TAG, "filePath:"+file.getAbsolutePath());
+        mMetadataCompatRetriever.setDataSource(path);
+        String heightStr = mMetadataCompatRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        String widthStr = mMetadataCompatRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        String rotation = mMetadataCompatRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        Log.e(TAG, "height:"+heightStr+",width:"+widthStr+",rotation:"+rotation);
+
+
     }
 
     private void restorePlayerInfoIfExists(Bundle savedInstanceState) {
@@ -52,7 +83,7 @@ public class TestActivity extends AppCompatActivity {
         }
     }
 
-    private void init() {
+   /* private void init() {
         mPresenter = (VideoPlayerContract.Presenter) findViewById(R.id.nice_video_player);
         mPresenter.setPlayerType(NiceVideoPlayer.PLAYER_TYPE_NATIVE);
         mPresenter.setUp("http://tanzi27niu.cdsb.mobi/wps/wp-content/uploads/2017/05/2017-05-17_17-33-30.mp4", null);
@@ -60,7 +91,7 @@ public class TestActivity extends AppCompatActivity {
         controller.setTitle("办公室小野开番外了，居然在办公室开澡堂！老板还点赞？");
         controller.setImage("http://tanzi27niu.cdsb.mobi/wps/wp-content/uploads/2017/05/2017-05-17_17-30-43.jpg");
         mPresenter.setViewer(controller);
-    }
+    }*/
 
 
     public void enterTinyWindow(View view) {
@@ -74,15 +105,15 @@ public class TestActivity extends AppCompatActivity {
         }
     }
 
-    @Override
+   /* @Override
     protected void onResume() {
         if(mPausedBySystem && (mPresenter.isPaused() || mPresenter.isBufferingPaused())){
             mPresenter.resume();
         }
         super.onResume();
-    }
+    }*/
 
-    @Override
+   /* @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         Log.e(TAG, "onSaveInstanceState");
@@ -91,9 +122,9 @@ public class TestActivity extends AppCompatActivity {
             outState.putLong(SAVED_KEY_POSITION, mPresenter.getCurrentPosition());
             outState.putString(SAVED_KEY_URL, mPresenter.getPlayingUrl());
         }
-    }
+    }*/
 
-    @Override
+   /* @Override
     protected void onPause() {
         if(mPresenter.isBufferingPlaying() || mPresenter.isPlaying()){
             mPresenter.pause();
@@ -102,13 +133,13 @@ public class TestActivity extends AppCompatActivity {
             mPausedBySystem = false;
         }
         super.onPause();
-    }
+    }*/
 
-    @Override
+   /* @Override
     protected void onDestroy() {
         mPresenter.stop();
         super.onDestroy();
-    }
+    }*/
 
     public void showVideoList(View view) {
         startActivity(new Intent(this, RecyclerViewActivity.class));
