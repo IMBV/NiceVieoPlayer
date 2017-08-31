@@ -26,7 +26,7 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /**
  * Created by yqpan on 2017/8/10.
- * todo: 目前采用的是if else的判断,这样的方式可能会遗漏很多种情况,比如说目前的mOnSeekToCompletedListener的情况,所以需要优化一个采用状态机的方式的
+ * todo: 目前采用的是if else的判断,这样的方式可能会遗漏很多种情况,需要重新书写一版使用状态机方式的
  * 播放器
  */
 public class VideoPlayerRender extends FrameLayout
