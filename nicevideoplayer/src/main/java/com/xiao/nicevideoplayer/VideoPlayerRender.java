@@ -252,6 +252,7 @@ public class VideoPlayerRender extends FrameLayout
             mMediaPlayer.setOnErrorListener(mOnErrorListener);
             mMediaPlayer.setOnInfoListener(mOnInfoListener);
             mMediaPlayer.setOnBufferingUpdateListener(mOnBufferingUpdateListener);
+            mMediaPlayer.setOnSeekCompleteListener(mOnSeekToCompletedListener);
         }
     }
 
@@ -433,6 +434,21 @@ public class VideoPlayerRender extends FrameLayout
         @Override
         public void onBufferingUpdate(IMediaPlayer mp, int percent) {
             mBufferPercentage = percent;
+        }
+    };
+
+    private IMediaPlayer.OnSeekCompleteListener mOnSeekToCompletedListener = new IMediaPlayer.OnSeekCompleteListener() {
+        @Override
+        public void onSeekComplete(IMediaPlayer mediaPlayer) {
+            log("onSeekToCompleted");
+            if(mTargetPlayState == PlayerState.PLAYING){
+                if(mCurrentPlayState == PlayerState.PREPARED){
+                    if(mOnPreparedListener != null){
+                        mOnPreparedListener.onPrepared(mediaPlayer);
+                    }
+                }
+
+            }
         }
     };
 
