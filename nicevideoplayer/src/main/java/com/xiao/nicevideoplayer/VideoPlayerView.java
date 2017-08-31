@@ -129,6 +129,9 @@ public class VideoPlayerView extends FrameLayout
                 mPresenter.pause();
             } else if (mPresenter.isPaused() || mPresenter.isBufferingPaused()) {
                 mPresenter.resume();
+            } else if(mPresenter.isCompleted() ){
+                mPresenter.stop();
+                mPresenter.start();
             }
         } else if (v == mFullScreen) {
             if (mPresenter.isNormalMode()) {
@@ -154,17 +157,23 @@ public class VideoPlayerView extends FrameLayout
     }
 
     private void setTopBottomVisible(boolean visible) {
+        setTopBottomVisible(visible, true);
+    }
+
+    private void setTopBottomVisible(boolean visible, boolean autoDismiss) {
         mTop.setVisibility(visible ? View.VISIBLE : View.GONE);
         mBottom.setVisibility(visible ? View.VISIBLE : View.GONE);
         mTopBottomVisible = visible;
         if (visible) {
-            if (!mPresenter.isPaused() && !mPresenter.isBufferingPaused()) {
+            if (autoDismiss && !mPresenter.isPaused() && !mPresenter.isBufferingPaused()) {
                 startDismissTopBottomTimer();
             }
         } else {
             cancelDismissTopBottomTimer();
         }
     }
+
+
 
     @Override
     public void onPlayerStateChanged(ScreenMode screenMode, PlayerState playState) {
@@ -200,25 +209,31 @@ public class VideoPlayerView extends FrameLayout
             mLoading.setVisibility(View.GONE);
             mRestartPause.setImageResource(R.drawable.ic_player_pause);
             startDismissTopBottomTimer();
+            startUpdateProgressTimer();
         }else if(playState == PlayerState.PAUSED){
             mLoading.setVisibility(View.GONE);
             mRestartPause.setImageResource(R.drawable.ic_player_start);
             cancelDismissTopBottomTimer();
+            cancelUpdateProgressTimer();
         }else if(playState == PlayerState.BUFFERING_PLAYING){
             mLoading.setVisibility(View.VISIBLE);
             mRestartPause.setImageResource(R.drawable.ic_player_pause);
             mLoadText.setText("正在缓冲...");
             startDismissTopBottomTimer();
+            startUpdateProgressTimer();
         }else if(playState == PlayerState.BUFFERING_PAUSED){
             mLoading.setVisibility(View.VISIBLE);
             mRestartPause.setImageResource(R.drawable.ic_player_start);
             mLoadText.setText("正在缓冲...");
             cancelDismissTopBottomTimer();
+            cancelUpdateProgressTimer();
         }else if(playState == PlayerState.COMPLETED){
             cancelUpdateProgressTimer();
-            setTopBottomVisible(false);
+            cancelDismissTopBottomTimer();
+            setTopBottomVisible(true, false);
             mImage.setVisibility(View.VISIBLE);
             mCompleted.setVisibility(View.VISIBLE);
+            mRestartPause.setImageResource(R.drawable.ic_player_start);
             if (mPresenter.isFullScreenMode()) {
                 mPresenter.exitFullScreen();
             }
@@ -228,6 +243,7 @@ public class VideoPlayerView extends FrameLayout
 //                mPresenter.stop();
         }else if(playState == PlayerState.ERROR){
             cancelUpdateProgressTimer();
+            cancelDismissTopBottomTimer();
             setTopBottomVisible(false);
             mTop.setVisibility(View.VISIBLE);
             mError.setVisibility(View.VISIBLE);
@@ -312,6 +328,7 @@ public class VideoPlayerView extends FrameLayout
         mLoading.setVisibility(View.GONE);
         mError.setVisibility(View.GONE);
         mCompleted.setVisibility(View.GONE);
+        mRestartPause.setImageResource(R.drawable.ic_player_start);
     }
 
     @Override

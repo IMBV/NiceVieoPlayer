@@ -25,7 +25,8 @@ import tv.danmaku.ijk.media.player.IMediaPlayer;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 
 /**
- * Created by XiaoJianjun on 2017/4/28.
+ * Created by yqpan on 2017/8/10.
+ * todo: 目前采用的是if else的判断,这样的方式可能会遗漏很多种情况,比如说目前的mOnSeekToCompletedListener的情况,所以需要优化一个采用状态机的方式的
  * 播放器
  */
 public class VideoPlayerRender extends FrameLayout
@@ -145,8 +146,12 @@ public class VideoPlayerRender extends FrameLayout
             if(pos >= 0){
                 mTargetPosition = pos;
                 log("pos:"+pos+",state:"+ mPlayerScreenMode);
-                if(mCurrentPlayState != PlayerState.PREPARING && mCurrentPlayState != PlayerState.IDLE && mCurrentPlayState != PlayerState.ERROR){
+                if (mCurrentPlayState != PlayerState.IDLE && mCurrentPlayState != PlayerState.PREPARING
+                        && mCurrentPlayState != PlayerState.ERROR && mCurrentPlayState != PlayerState.COMPLETED) {
                     mMediaPlayer.seekTo(pos);
+                }else if(mCurrentPlayState == PlayerState.COMPLETED){
+                    stop();
+                    start();
                 }
             }
         }
@@ -441,12 +446,15 @@ public class VideoPlayerRender extends FrameLayout
         @Override
         public void onSeekComplete(IMediaPlayer mediaPlayer) {
             log("onSeekToCompleted");
-            if(mTargetPlayState == PlayerState.PLAYING){
-                if(mCurrentPlayState == PlayerState.PREPARED){
-                    if(mOnPreparedListener != null){
-                        mOnPreparedListener.onPrepared(mediaPlayer);
-                    }
+            if(mCurrentPlayState == PlayerState.PREPARED){
+                if(mOnPreparedListener != null){
+                    mOnPreparedListener.onPrepared(mediaPlayer);
                 }
+            }else if(mCurrentPlayState == PlayerState.BUFFERING_PLAYING || mCurrentPlayState == PlayerState.PLAYING){
+                mMediaPlayer.start();
+            }else if(mCurrentPlayState == PlayerState.BUFFERING_PAUSED || mCurrentPlayState == PlayerState.PAUSED){
+                mMediaPlayer.pause();
+            }else if(mCurrentPlayState == PlayerState.COMPLETED){//not gonna happen
 
             }
         }
